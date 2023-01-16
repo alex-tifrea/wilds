@@ -397,6 +397,8 @@ def main():
     if unlabeled_dataset is not None:
         log_group_data({"unlabeled": unlabeled_dataset}, log_grouper, logger)
 
+############################################
+    # TODO: initialize strategy
     # Initialize algorithm & load pretrained weights if provided
     algorithm = initialize_algorithm(
         config=config,
@@ -439,6 +441,7 @@ def main():
                 + ('. Updates behave as if torch loaders have drop_last=False\n')
             )
 
+        # TODO: iterate through rounds and call strategy.train each time
         train(
             algorithm=algorithm,
             datasets=datasets,

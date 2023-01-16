@@ -3,6 +3,7 @@ import torch
 import math
 from wilds.common.utils import get_counts
 from algorithms.ERM import ERM
+from algorithms.RW import RW
 from algorithms.AFN import AFN
 from algorithms.DANN import DANN
 from algorithms.groupDRO import GroupDRO
@@ -32,6 +33,16 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             loss=loss,
             metric=metric,
             n_train_steps=n_train_steps)
+    elif config.algorithm == 'RW':
+        train_g = train_grouper.metadata_to_group(train_dataset.metadata_array)
+        group_counts_train = get_counts(train_g, train_grouper.n_groups)
+        algorithm = RW(
+                config=config,
+                d_out=d_out,
+                grouper=train_grouper,
+                loss=loss,
+                metric=metric,
+                group_counts_train=group_counts_train)
     elif config.algorithm == 'groupDRO':
         train_g = train_grouper.metadata_to_group(train_dataset.metadata_array)
         is_group_in_train = get_counts(train_g, train_grouper.n_groups) > 0

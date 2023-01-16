@@ -278,7 +278,9 @@ def initialize_wandb(config):
         with open(config.wandb_api_key_path, "r") as f:
             os.environ["WANDB_API_KEY"] = f.read().strip()
 
-    wandb.init(**config.wandb_kwargs)
+    wandb_init_args = config.wandb_kwargs
+    wandb_init_args["settings"] = wandb.Settings(start_method="fork")
+    wandb.init(**wandb_init_args)
     wandb.config.update(config)
 
 def save_pred(y_pred, path_prefix):

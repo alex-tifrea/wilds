@@ -3,8 +3,8 @@ import torch.nn as nn
 import os
 import traceback
 
-from models.layers import Identity
-from utils import load
+from .layers import Identity
+from ..utils import load
 
 def initialize_model(config, d_out, is_featurizer=False):
     """
