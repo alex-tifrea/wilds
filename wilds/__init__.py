@@ -16,11 +16,14 @@ benchmark_datasets = [
 
 additional_datasets = [
     'celebA',
+    'cifar10lt',
+    'cifar100lt',
     'domainnet',
     'waterbirds',
     'yelp',
     'bdd100k',
     'sqf',
+    'svhnlt',
     'encode'
 ]
 
