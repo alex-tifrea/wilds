@@ -1,16 +1,15 @@
 import torch
-from algorithms.single_model_algorithm import SingleModelAlgorithm
+from algorithms.ERM import ERM
 from models.initializer import initialize_model
 from utils import move_to
 
 class RW(ERM):
     def __init__(self, config, d_out, grouper, loss,
             metric, n_train_steps, group_counts_train):
-        model = initialize_model(config, d_out)
         # initialize module
         super().__init__(
             config=config,
-            model=model,
+            d_out=d_out,
             grouper=grouper,
             loss=loss,
             metric=metric,

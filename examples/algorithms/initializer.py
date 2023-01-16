@@ -42,6 +42,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
                 grouper=train_grouper,
                 loss=loss,
                 metric=metric,
+                n_train_steps=n_train_steps,
                 group_counts_train=group_counts_train)
     elif config.algorithm == 'groupDRO':
         train_g = train_grouper.metadata_to_group(train_dataset.metadata_array)
