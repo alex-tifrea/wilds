@@ -23,6 +23,13 @@ class LTDataset(WILDSDataset):
         }
         data_train = dataset_fn[dataset](self._data_dir, train=True, download=download)
         data_test = dataset_fn[dataset](self._data_dir, train=False, download=download)
+
+        data_train = self.subsample_min_classes(
+            data=data_train,
+            fraction_min_classes=fraction_min_classes,
+            maj_to_min_ratio=maj_to_min_ratio,
+        )
+
         train_size = int((1 - val_ratio) * len(data_train))
         val_size = len(data_train) - train_size
         test_size = len(data_test)
@@ -71,3 +78,24 @@ class LTDataset(WILDSDataset):
             metric,
             self._eval_grouper,
             y_pred, y_true, metadata)
+
+    def subsample_min_classes(self, data, fraction_min_classes, maj_to_min_ratio):
+        np.random.seed(42)
+        X, y = np.array(data.data), np.array(data.targets)
+
+        n_classes = len(np.unique(y))
+        n_min_classes = int(n_classes * fraction_min_classes)
+        new_X, new_y = X[y == 0], y[y == 0]
+        for curr_y in range(1, n_classes - n_min_classes):
+            print(new_X.shape, new_y.shape)
+            new_X = np.concatenate((new_X, X[y == curr_y]), axis=0)
+            new_y = np.concatenate((new_y, y[y == curr_y]), axis=0)
+        min_class_size = int(len(data) / n_classes / maj_to_min_ratio)
+        for curr_y in range(n_classes - n_min_classes, n_classes):
+            idxs = np.random.choice(len(y[y == curr_y]), min_class_size, replace=False)
+            new_X = np.concatenate((new_X, X[y == curr_y][idxs]), axis=0)
+            new_y = np.concatenate((new_y, y[y == curr_y][idxs]), axis=0)
+
+        idxs = np.random.permutation(new_y.shape[0])
+        data.data, data.targets = new_X[idxs], new_y[idxs]
+        return data
