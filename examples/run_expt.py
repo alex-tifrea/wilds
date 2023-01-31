@@ -360,8 +360,6 @@ def main():
     #         groupby_fields=config.groupby_fields
     #     )
     #
-    # full_dataset.init_for_al(seed_size=1000)
-    #
     # # Configure labeled torch datasets (WILDS dataset splits)
     # datasets = defaultdict(dict)
     # for split in full_dataset.split_dict.keys():
@@ -436,6 +434,8 @@ def main():
     # Initialize algorithm & load pretrained weights if provided
     # if unlabeled_dataset is not None:
     #     log_group_data({"unlabeled": unlabeled_dataset}, log_grouper, logger)
+
+    full_dataset.init_for_al(seed_size=config.n_init_labeled)
 
     strategy = get_query_strategy(config.strategy_name)(
         dataset=full_dataset,
