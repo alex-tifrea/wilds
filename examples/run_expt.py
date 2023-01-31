@@ -438,7 +438,7 @@ def main():
     #     log_group_data({"unlabeled": unlabeled_dataset}, log_grouper, logger)
 
     strategy = get_query_strategy(config.strategy_name)(
-        full_dataset=full_dataset,
+        dataset=full_dataset,
         config=config,
         logger=logger,
         train_grouper=train_grouper,
