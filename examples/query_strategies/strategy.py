@@ -10,12 +10,12 @@ from wilds.common.data_loaders import get_train_loader, get_eval_loader
 from transforms import initialize_transform
 
 class Strategy:
-    def __init__(self, full_dataset, algorithm, config, logger):
+    def __init__(self, full_dataset, config, logger, train_grouper):
         self.full_dataset = full_dataset
         self.config = config
         self.logger = logger
         assert hasattr(self.full_dataset, "_labeled_for_al_array"), "Need to call init_for_al on the dataset first."
-        self.algorithm = algorithm
+        self.train_grouper = train_grouper
 
     def query(self, n):
         pass
@@ -31,7 +31,7 @@ class Strategy:
     def train(self, n_round=None):
         from train import train_round, evaluate
 
-        datasets = self.prepare_training(n_round)
+        datasets, algorithm = self.prepare_training(n_round)
 
         train_acc_avg, val_acc_avg = train_round(
             algorithm=self.algorithm,
@@ -50,7 +50,8 @@ class Strategy:
         return train_acc_avg, val_acc_avg
 
     def prepare_training(self, n_round):
-        from utils import BatchLogger
+        from utils import BatchLogger, log_group_data
+        from algorithms.initializer import initialize_algorithm
 
         # Transforms & data augmentations for labeled dataset
         # To modify data augmentation, modify the following code block.
@@ -102,7 +103,7 @@ class Strategy:
                     dataset=datasets[split]['dataset'],
                     batch_size=self.config.batch_size,
                     uniform_over_groups=self.config.uniform_over_groups,
-                    grouper=self.algorithm.grouper,
+                    grouper=self.train_grouper,
                     distinct_groups=self.config.distinct_groups,
                     n_groups_per_batch=self.config.n_groups_per_batch,
                     **self.config.loader_kwargs)
@@ -110,7 +111,7 @@ class Strategy:
                 datasets[split]['loader'] = get_eval_loader(
                     loader=self.config.eval_loader,
                     dataset=datasets[split]['dataset'],
-                    grouper=self.algorithm.grouper,
+                    grouper=self.train_grouper,
                     batch_size=self.config.batch_size,
                     **self.config.loader_kwargs)
 
@@ -126,7 +127,18 @@ class Strategy:
             datasets[split]['algo_logger'] = BatchLogger(
                 os.path.join(self.config.log_dir, f'{split}_{n_round}_algo.csv'), mode=self.logger.mode, use_wandb=self.config.use_wandb
             )
-        return datasets
+
+        log_group_data(datasets, self.train_grouper, self.logger)
+
+        # Initialize algorithm.
+        algorithm = initialize_algorithm(
+            config=self.config,
+            datasets=datasets,
+            train_grouper=self.train_grouper,
+            unlabeled_dataset=None,
+        )
+
+        return datasets, algorithm
 
     def predict(self, data):
         # TODO: replace with run_epoch with train=False

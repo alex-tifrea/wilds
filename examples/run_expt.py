@@ -17,8 +17,7 @@ import wilds
 from wilds.common.grouper import CombinatorialGrouper
 from wilds.datasets.unlabeled.wilds_unlabeled_dataset import WILDSPseudolabeledSubset
 
-from utils import set_seed, Logger, BatchLogger, log_config, ParseKwargs, load, initialize_wandb, log_group_data, parse_bool, get_model_prefix, move_to, get_query_strategy
-from algorithms.initializer import initialize_algorithm, infer_d_out
+from utils import set_seed, Logger, BatchLogger, log_config, ParseKwargs, load, initialize_wandb, parse_bool, get_model_prefix, move_to, get_query_strategy
 from transforms import initialize_transform
 from models.initializer import initialize_model
 from configs.utils import populate_defaults
@@ -245,6 +244,9 @@ def main():
         groupby_fields=config.groupby_fields
     )
 
+    if config.use_wandb:
+        initialize_wandb(config)
+
     # # Transforms & data augmentations for labeled dataset
     # # To modify data augmentation, modify the following code block.
     # # If you want to use transforms that modify both `x` and `y`,
@@ -418,38 +420,28 @@ def main():
     #     datasets[split]['algo_logger'] = BatchLogger(
     #         os.path.join(config.log_dir, f'{split}_algo.csv'), mode=mode, use_wandb=config.use_wandb
     #     )
-
-    if config.use_wandb:
-        initialize_wandb(config)
-
-    # Logging dataset info
-    # Show class breakdown if feasible
-    if config.no_group_logging and full_dataset.is_classification and full_dataset.y_size==1 and full_dataset.n_classes <= 10:
-        log_grouper = CombinatorialGrouper(
-            dataset=full_dataset,
-            groupby_fields=['y'])
-    elif config.no_group_logging:
-        log_grouper = None
-    else:
-        log_grouper = train_grouper
-    log_group_data(datasets, log_grouper, logger)
-    if unlabeled_dataset is not None:
-        log_group_data({"unlabeled": unlabeled_dataset}, log_grouper, logger)
+    #
+    # # Logging dataset info
+    # # Show class breakdown if feasible
+    # if config.no_group_logging and full_dataset.is_classification and full_dataset.y_size==1 and full_dataset.n_classes <= 10:
+    #     log_grouper = CombinatorialGrouper(
+    #         dataset=full_dataset,
+    #         groupby_fields=['y'])
+    # elif config.no_group_logging:
+    #     log_grouper = None
+    # else:
+    #     log_grouper = train_grouper
 
 ############################################
     # Initialize algorithm & load pretrained weights if provided
-    algorithm = initialize_algorithm(
-        config=config,
-        datasets=datasets,
-        train_grouper=train_grouper,
-        unlabeled_dataset=unlabeled_dataset,
-    )
+    # if unlabeled_dataset is not None:
+    #     log_group_data({"unlabeled": unlabeled_dataset}, log_grouper, logger)
 
     strategy = get_query_strategy(config.strategy_name)(
         full_dataset=full_dataset,
-        algorithm=algorithm,
         config=config,
         logger=logger,
+        train_grouper=train_grouper,
     )
 
     print("Round 0")
