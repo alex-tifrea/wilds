@@ -2,8 +2,8 @@ import numpy as np
 from .strategy import Strategy
 
 class LeastConfidence(Strategy):
-    def __init__(self, dataset, algorithm, config, logger):
-        super(LeastConfidence, self).__init__(dataset, algorithm, config, logger)
+    def __init__(self, dataset, config, logger, train_grouper):
+        super(LeastConfidence, self).__init__(dataset, config, logger, train_grouper)
 
 # TODO: maybe pass as arg the unlabaled dataset
     def query(self, n):
