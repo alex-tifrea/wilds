@@ -445,7 +445,7 @@ def main():
     )
 
     print("Round 0")
-    train_acc_avg, val_acc_avg = strategy.train(n_epoch=config.n_epochs, n_round=0)
+    train_acc_avg, val_acc_avg = strategy.train(n_round=0)
     print(f"Round 0: train_acc_avg={train_acc_avg}; val_acc_avg={val_acc_avg}")
 
     for rd in range(config.n_rounds):
@@ -458,7 +458,7 @@ def main():
         # TODO: call get_subset to create the train and unlabeled_for_al datasets + their loaders
         # TODO: log_group_data(datasets, log_grouper, logger)
 
-        train_acc_avg, val_acc_avg = strategy.train(n_epoch=config.n_epochs, n_round=rd)
+        train_acc_avg, val_acc_avg = strategy.train(n_round=rd)
         print(f"Round 0: train_acc_avg={train_acc_avg}; val_acc_avg={val_acc_avg}")
 
         # TODO: log metrics
