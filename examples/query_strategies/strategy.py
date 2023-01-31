@@ -34,7 +34,7 @@ class Strategy:
         datasets, algorithm = self.prepare_training(n_round)
 
         train_acc_avg, val_acc_avg = train_round(
-            algorithm=self.algorithm,
+            algorithm=algorithm,
             datasets=datasets,
             general_logger=self.logger,
             config=self.config,
