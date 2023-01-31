@@ -43,6 +43,10 @@ class Strategy:
             unlabeled_dataset=None,
         )
 
+        for split in datasets:
+            datasets[split]['eval_logger'].close()
+            datasets[split]['algo_logger'].close()
+
         return train_acc_avg, val_acc_avg
 
     def prepare_training(self, n_round):

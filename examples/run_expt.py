@@ -544,9 +544,6 @@ def main():
     if config.use_wandb:
         wandb.finish()
     logger.close()
-    for split in datasets:
-        datasets[split]['eval_logger'].close()
-        datasets[split]['algo_logger'].close()
 
 if __name__=='__main__':
     main()
