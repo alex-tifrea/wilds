@@ -10,7 +10,7 @@ from wilds.common.data_loaders import get_train_loader, get_eval_loader
 from transforms import initialize_transform
 
 class Strategy:
-    def __init__(self, full_dataset, algorithm, config, logger):
+    def __init__(self, full_dataset, config, logger, train_grouper):
         self.full_dataset = full_dataset
         self.config = config
         self.logger = logger
