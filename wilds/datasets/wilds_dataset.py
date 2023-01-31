@@ -13,8 +13,8 @@ class WILDSDataset:
     - metadata is a vector of relevant information, e.g., domain.
       For convenience, metadata also contains y.
     """
-    DEFAULT_SPLITS = {'train': 0, 'val': 1, 'test': 2}
-    DEFAULT_SPLIT_NAMES = {'train': 'Train', 'val': 'Validation', 'test': 'Test'}
+    DEFAULT_SPLITS = {'train': 0, 'val': 1, 'test': 2, 'unlabeled_for_al': 3}
+    DEFAULT_SPLIT_NAMES = {'train': 'Train', 'val': 'Validation', 'test': 'Test', 'unlabeled_for_al': 'UnlabeledForAL'}
     DEFAULT_SOURCE_DOMAIN_SPLITS = [0]
 
     def __init__(self, root_dir, download, split_scheme):
@@ -78,6 +78,38 @@ class WILDSDataset:
             split_idx = np.sort(np.random.permutation(split_idx)[:num_to_retain])
 
         return WILDSSubset(self, split_idx, transform)
+
+    def get_labeled_subset(self, transform=None):
+        """
+        Args:
+            - transform (function): Any data transformations to be applied to the input x.
+        Output:
+            - subset (WILDSSubset): A (potentially subsampled) subset of the WILDSDataset.
+        """
+        split_idx = np.where(self._labeled_for_al_array)[0]
+        return WILDSSubset(self, split_idx, transform)
+
+    def get_unlabeled_for_al_subset(self, transform=None):
+        """
+        Args:
+            - transform (function): Any data transformations to be applied to the input x.
+        Output:
+            - subset (WILDSSubset): A (potentially subsampled) subset of the WILDSDataset.
+        """
+        split_idx = np.where(self._labeled_for_al_array != 1)[0]
+        return WILDSSubset(self, split_idx, transform)
+
+    # Set self._labeled_for_al_array with 0 for unlabeled and 1 for labeled
+    def init_for_al(self, seed_size=None):
+        train_idxs = (self.split_array == self.split_dict["train"])
+        if seed_size is None:
+            self._labeled_for_al_array = train_idxs
+        else:
+            self._labeled_for_al_array = np.zeros_like(self.split_array)
+            labeled_idxs = np.random.choice(np.where(train_idxs)[0], seed_size, replace=False)
+            self._labeled_for_al_array[labeled_idxs] = 1
+            assert self._labeled_for_al_array[labeled_idxs].sum() == seed_size
+
 
     def _add_coarse_domain_metadata(self):
         """

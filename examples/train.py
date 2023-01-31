@@ -98,7 +98,7 @@ def run_epoch(algorithm, dataset, general_logger, epoch, config, train, unlabele
     return results, epoch_y_pred
 
 
-def train(algorithm, datasets, general_logger, config, epoch_offset, best_val_metric, unlabeled_dataset=None):
+def train_round(algorithm, datasets, general_logger, config, epoch_offset, best_val_metric, unlabeled_dataset=None):
     """
     Train loop that, each epoch:
         - Steps an algorithm on the datasets['train'] split and the unlabeled split
@@ -111,7 +111,7 @@ def train(algorithm, datasets, general_logger, config, epoch_offset, best_val_me
         general_logger.write('\nEpoch [%d]:\n' % epoch)
 
         # First run training
-        run_epoch(algorithm, datasets['train'], general_logger, epoch, config, train=True, unlabeled_dataset=unlabeled_dataset)
+        train_results, _ = run_epoch(algorithm, datasets['train'], general_logger, epoch, config, train=True, unlabeled_dataset=unlabeled_dataset)
 
         # Then run val
         val_results, y_pred = run_epoch(algorithm, datasets['val'], general_logger, epoch, config, train=False)
@@ -126,6 +126,7 @@ def train(algorithm, datasets, general_logger, config, epoch_offset, best_val_me
             else:
                 is_best = curr_val_metric > best_val_metric
         if is_best:
+            # TODO: log this in wandb
             best_val_metric = curr_val_metric
             general_logger.write(f'Epoch {epoch} has the best validation performance so far.\n')
 
@@ -142,6 +143,7 @@ def train(algorithm, datasets, general_logger, config, epoch_offset, best_val_me
             save_pred_if_needed(y_pred, datasets[split], epoch, config, is_best)
 
         general_logger.write('\n')
+    return train_results["acc_avg"], val_results["acc_avg"]
 
 
 def evaluate(algorithm, datasets, epoch, general_logger, config, is_best):
