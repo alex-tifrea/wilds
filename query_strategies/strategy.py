@@ -7,9 +7,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from wilds.common.data_loaders import get_train_loader, get_eval_loader
-from utils import Logger, BatchLogger, log_config, log_group_data
-from transforms import initialize_transform
-from train import train_round, evaluate
+from examples.utils import Logger, BatchLogger, log_config, log_group_data
+from examples.transforms import initialize_transform
+from examples.train import train_round, evaluate
 
 class Strategy:
     def __init__(self, full_dataset, algorithm, config, logger):
