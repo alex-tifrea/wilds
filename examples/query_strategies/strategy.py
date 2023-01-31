@@ -7,9 +7,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from wilds.common.data_loaders import get_train_loader, get_eval_loader
-from examples.utils import Logger, BatchLogger, log_config, log_group_data
-from examples.transforms import initialize_transform
-from examples.train import train_round, evaluate
+from transforms import initialize_transform
 
 class Strategy:
     def __init__(self, full_dataset, algorithm, config, logger):
@@ -31,6 +29,8 @@ class Strategy:
             self.dataset._labeled_for_al_array[neg_idxs] = 0
 
     def train(self, n_round=None):
+        from train import train_round, evaluate
+
         datasets = self.prepare_training(n_round)
 
         train_acc_avg, val_acc_avg = train_round(
@@ -46,6 +46,8 @@ class Strategy:
         return train_acc_avg, val_acc_avg
 
     def prepare_training(self, n_round):
+        from utils import BatchLogger
+
         # Transforms & data augmentations for labeled dataset
         # To modify data augmentation, modify the following code block.
         # If you want to use transforms that modify both `x` and `y`,

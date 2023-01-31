@@ -14,12 +14,10 @@ except Exception as e:
     pass
 
 import wilds
-from wilds.common.data_loaders import get_train_loader, get_eval_loader
 from wilds.common.grouper import CombinatorialGrouper
 from wilds.datasets.unlabeled.wilds_unlabeled_dataset import WILDSPseudolabeledSubset
 
 from utils import set_seed, Logger, BatchLogger, log_config, ParseKwargs, load, initialize_wandb, log_group_data, parse_bool, get_model_prefix, move_to, get_query_strategy
-from train import train, evaluate, infer_predictions
 from algorithms.initializer import initialize_algorithm, infer_d_out
 from transforms import initialize_transform
 from models.initializer import initialize_model
