@@ -17,17 +17,54 @@ import wilds
 from wilds.common.grouper import CombinatorialGrouper
 from wilds.datasets.unlabeled.wilds_unlabeled_dataset import WILDSPseudolabeledSubset
 
-from utils import set_seed, Logger, BatchLogger, log_config, ParseKwargs, load, initialize_wandb, parse_bool, get_model_prefix, move_to, get_query_strategy
+from utils import set_seed, Logger, BatchLogger, log_config, ParseKwargs, load, initialize_wandb, parse_bool, get_model_prefix, move_to
+# from query_strategies.strategy import get_query_strategy
 from transforms import initialize_transform
 from models.initializer import initialize_model
 from configs.utils import populate_defaults
 import configs.supported as supported
+
+from query_strategies import RandomSampling, LeastConfidence, MarginSampling, EntropySampling, \
+    LeastConfidenceDropout, MarginSamplingDropout, EntropySamplingDropout, \
+    KMeansSampling, KCenterGreedy, BALDDropout, \
+    AdversarialBIM, AdversarialDeepFool, OracleUncertainty
 
 import torch.multiprocessing
 
 # Necessary for large images of GlobalWheat
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
+def get_query_strategy(name):
+    if name == "RandomSampling":
+        return RandomSampling
+    elif name == "LeastConfidence":
+        return LeastConfidence
+    elif name == "OracleUncertainty":
+        return OracleUncertainty
+    elif name == "MarginSampling":
+        return MarginSampling
+    elif name == "EntropySampling":
+        return EntropySampling
+    elif name == "LeastConfidenceDropout":
+        return LeastConfidenceDropout
+    elif name == "MarginSamplingDropout":
+        return MarginSamplingDropout
+    elif name == "EntropySamplingDropout":
+        return EntropySamplingDropout
+    elif name == "KMeansSampling":
+        return KMeansSampling
+    elif name == "KCenterGreedy":
+        return KCenterGreedy
+    elif name == "BALDDropout":
+        return BALDDropout
+    elif name == "AdversarialBIM":
+        return AdversarialBIM
+    elif name == "AdversarialDeepFool":
+        return AdversarialDeepFool
+    else:
+        raise NotImplementedError
 
 def main():
     
@@ -445,23 +482,16 @@ def main():
     )
 
     print("Round 0")
-    train_acc_avg, val_acc_avg = strategy.train(n_round=0)
+    train_acc_avg, val_acc_avg, curr_datasets = strategy.train(n_round=0)
     print(f"Round 0: train_acc_avg={train_acc_avg}; val_acc_avg={val_acc_avg}")
 
     for rd in range(config.n_rounds):
         print(f"Round {rd}")
-        pass
-        # TODO: call strategy.query(); make sure we have a way to eval on unlabeled_for_al
-        query_idxs = strategy.query(config.n_queries)
+        query_idxs = strategy.query(config.n_queries, curr_datasets)
         strategy.update(query_idxs)
 
-        # TODO: call get_subset to create the train and unlabeled_for_al datasets + their loaders
-        # TODO: log_group_data(datasets, log_grouper, logger)
-
-        train_acc_avg, val_acc_avg = strategy.train(n_round=rd)
+        train_acc_avg, val_acc_avg, curr_datasets = strategy.train(n_round=rd)
         print(f"Round 0: train_acc_avg={train_acc_avg}; val_acc_avg={val_acc_avg}")
-
-        # TODO: log metrics
 
     # TODO: resume and eval_only currently not supported
     assert config.resume == False, "resume currently not supported"
@@ -503,7 +533,6 @@ def main():
     #             + ('. Updates behave as if torch loaders have drop_last=False\n')
     #         )
     #
-    #     # TODO: iterate through rounds and call strategy.train each time
     #     train(
     #         algorithm=algorithm,
     #         datasets=datasets,

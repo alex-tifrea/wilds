@@ -9,11 +9,6 @@ import torch
 import pandas as pd
 import re
 
-from query_strategies import RandomSampling, LeastConfidence, MarginSampling, EntropySampling, \
-                             LeastConfidenceDropout, MarginSamplingDropout, EntropySamplingDropout, \
-                             KMeansSampling, KCenterGreedy, BALDDropout, \
-                             AdversarialBIM, AdversarialDeepFool, OracleUncertainty
-
 from torch.utils.data import DataLoader
 
 try:
@@ -411,33 +406,3 @@ class InfiniteDataIterator:
 
     def __len__(self):
         return len(self.data_loader)
-
-def get_query_strategy(name):
-    if name == "RandomSampling":
-        return RandomSampling
-    elif name == "LeastConfidence":
-        return LeastConfidence
-    elif name == "OracleUncertainty":
-        return OracleUncertainty
-    elif name == "MarginSampling":
-        return MarginSampling
-    elif name == "EntropySampling":
-        return EntropySampling
-    elif name == "LeastConfidenceDropout":
-        return LeastConfidenceDropout
-    elif name == "MarginSamplingDropout":
-        return MarginSamplingDropout
-    elif name == "EntropySamplingDropout":
-        return EntropySamplingDropout
-    elif name == "KMeansSampling":
-        return KMeansSampling
-    elif name == "KCenterGreedy":
-        return KCenterGreedy
-    elif name == "BALDDropout":
-        return BALDDropout
-    elif name == "AdversarialBIM":
-        return AdversarialBIM
-    elif name == "AdversarialDeepFool":
-        return AdversarialDeepFool
-    else:
-        raise NotImplementedError

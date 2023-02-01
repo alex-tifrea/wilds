@@ -86,7 +86,7 @@ class WILDSDataset:
         Output:
             - subset (WILDSSubset): A (potentially subsampled) subset of the WILDSDataset.
         """
-        split_idx = np.where(self._labeled_for_al_array)[0]
+        split_idx = np.where(self.labeled_for_al_array)[0]
         return WILDSSubset(self, split_idx, transform)
 
     def get_unlabeled_for_al_subset(self, transform=None):
@@ -96,19 +96,19 @@ class WILDSDataset:
         Output:
             - subset (WILDSSubset): A (potentially subsampled) subset of the WILDSDataset.
         """
-        split_idx = np.where(self._labeled_for_al_array != 1)[0]
+        split_idx = np.where(self.labeled_for_al_array != 1)[0]
         return WILDSSubset(self, split_idx, transform)
 
     # Set self._labeled_for_al_array with 0 for unlabeled and 1 for labeled
     def init_for_al(self, seed_size=None):
         train_idxs = (self.split_array == self.split_dict["train"])
         if seed_size is None:
-            self._labeled_for_al_array = train_idxs
+            self.labeled_for_al_array = train_idxs
         else:
-            self._labeled_for_al_array = np.zeros_like(self.split_array)
+            self.labeled_for_al_array = np.zeros_like(self.split_array)
             labeled_idxs = np.random.choice(np.where(train_idxs)[0], seed_size, replace=False)
-            self._labeled_for_al_array[labeled_idxs] = 1
-            assert self._labeled_for_al_array[labeled_idxs].sum() == seed_size
+            self.labeled_for_al_array[labeled_idxs] = 1
+            assert self.labeled_for_al_array[labeled_idxs].sum() == seed_size
 
 
     def _add_coarse_domain_metadata(self):

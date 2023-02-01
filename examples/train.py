@@ -98,7 +98,7 @@ def run_epoch(algorithm, dataset, general_logger, epoch, config, train, unlabele
     return results, epoch_y_pred
 
 
-def train_round(algorithm, datasets, general_logger, config, epoch_offset, best_val_metric, unlabeled_dataset=None):
+def train_round(algorithm, datasets, general_logger, logger_over_rounds, config, n_round, epoch_offset, best_val_metric, unlabeled_dataset=None):
     """
     Train loop that, each epoch:
         - Steps an algorithm on the datasets['train'] split and the unlabeled split
@@ -107,11 +107,12 @@ def train_round(algorithm, datasets, general_logger, config, epoch_offset, best_
         - Evaluates on any other specified splits in the configs
     Assumes that the datasets dict contains labeled data.
     """
+    best_results = {}
     for epoch in range(epoch_offset, config.n_epochs):
         general_logger.write('\nEpoch [%d]:\n' % epoch)
 
         # First run training
-        train_results, _ = run_epoch(algorithm, datasets['train'], general_logger, epoch, config, train=True, unlabeled_dataset=unlabeled_dataset)
+        train_results, train_results = run_epoch(algorithm, datasets['train'], general_logger, epoch, config, train=True, unlabeled_dataset=unlabeled_dataset)
 
         # Then run val
         val_results, y_pred = run_epoch(algorithm, datasets['val'], general_logger, epoch, config, train=False)
@@ -126,8 +127,14 @@ def train_round(algorithm, datasets, general_logger, config, epoch_offset, best_
             else:
                 is_best = curr_val_metric > best_val_metric
         if is_best:
-            # TODO: log this in wandb
             best_val_metric = curr_val_metric
+            best_results = {}
+            best_results["best_epoch"] = epoch
+            best_results["best_val_metric"] = best_val_metric
+            for k, v in train_results:
+                best_results[f"train_{k}"] = v
+            for k, v in val_results:
+                best_results[f"val_{k}"] = v
             general_logger.write(f'Epoch {epoch} has the best validation performance so far.\n')
 
         save_model_if_needed(algorithm, datasets['val'], epoch, config, is_best, best_val_metric)
@@ -135,14 +142,21 @@ def train_round(algorithm, datasets, general_logger, config, epoch_offset, best_
 
         # Then run everything else
         if config.evaluate_all_splits:
-            additional_splits = [split for split in datasets.keys() if split not in ['train','val']]
+            additional_splits = [split for split in datasets.keys() if split not in ['train','val','unlabeled_for_al']]
         else:
             additional_splits = config.eval_splits
         for split in additional_splits:
-            _, y_pred = run_epoch(algorithm, datasets[split], general_logger, epoch, config, train=False)
+            split_results, y_pred = run_epoch(algorithm, datasets[split], general_logger, epoch, config, train=False)
             save_pred_if_needed(y_pred, datasets[split], epoch, config, is_best)
+            if is_best:
+                for k, v in split_results:
+                    best_results[f"{split}_{k}"] = v
 
         general_logger.write('\n')
+
+    best_results['n_round'] = n_round
+    logger_over_rounds.log(best_results)
+
     return train_results["acc_avg"], val_results["acc_avg"]
 
 
@@ -195,13 +209,14 @@ def infer_predictions(model, loader, config):
         x = x.to(config.device)
         with torch.no_grad(): 
             output = model(x)
-            if not config.soft_pseudolabels and config.process_pseudolabels_function is not None:
-                _, output, _, _ = process_pseudolabels_functions[config.process_pseudolabels_function](
-                    output,
-                    confidence_threshold=config.self_training_threshold if config.dataset == 'globalwheat' else 0
-                )
-            elif config.soft_pseudolabels:
-                output = torch.nn.functional.softmax(output, dim=1)
+            # if not config.soft_pseudolabels and config.process_pseudolabels_function is not None:
+            #     _, output, _, _ = process_pseudolabels_functions[config.process_pseudolabels_function](
+            #         output,
+            #         confidence_threshold=config.self_training_threshold if config.dataset == 'globalwheat' else 0
+            #     )
+            # elif config.soft_pseudolabels:
+            #     output = torch.nn.functional.softmax(output, dim=1)
+            output = torch.nn.functional.softmax(output, dim=1)
         if isinstance(output, list):
             y_pred.extend(detach_and_clone(output))
         else:

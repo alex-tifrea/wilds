@@ -1,56 +1,59 @@
 from collections import defaultdict
-import numpy as np
 import os
-import torch
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import DataLoader
 
 from wilds.common.data_loaders import get_train_loader, get_eval_loader
 from transforms import initialize_transform
+from utils import BatchLogger, log_group_data
 
 class Strategy:
     def __init__(self, full_dataset, config, logger, train_grouper):
         self.full_dataset = full_dataset
         self.config = config
         self.logger = logger
-        assert hasattr(self.full_dataset, "_labeled_for_al_array"), "Need to call init_for_al on the dataset first."
+        assert hasattr(self.full_dataset, "labeled_for_al_array"), "Need to call init_for_al on the dataset first."
         self.train_grouper = train_grouper
+        self.curr_datasets, self.curr_algorithm = None, None
 
-    def query(self, n):
-        pass
+        self.logger_over_rounds = BatchLogger(
+            os.path.join(self.config.log_dir, f'rounds_eval.csv'), mode=self.logger.mode,
+            use_wandb=self.config.use_wandb
+        )
+
+    def query(self, n, curr_datasets):
+        raise NotImplementedError
 
     def update(self, pos_idxs, neg_idxs=None):
         # Check that all the indices point to training samples (not validation).
-        assert self.datasets.split_array[pos_idxs].sum() == len(pos_idxs), "Some indexes are not in the training set."
+        assert self.full_dataset.split_array[pos_idxs].sum() == len(pos_idxs), "Some indexes are not in the training set."
 
-        self.dataset._labeled_for_al_array[pos_idxs] = 1
+        self.full_dataset.labeled_for_al_array[pos_idxs] = 1
         if neg_idxs:
-            self.dataset._labeled_for_al_array[neg_idxs] = 0
+            self.full_dataset.labeled_for_al_array[neg_idxs] = 0
 
     def train(self, n_round=None):
-        from train import train_round, evaluate
+        from train import train_round
 
-        datasets, algorithm = self.prepare_training(n_round)
+        self.curr_datasets, self.curr_algorithm = self.prepare_training(n_round)
 
         train_acc_avg, val_acc_avg = train_round(
-            algorithm=algorithm,
-            datasets=datasets,
+            algorithm=self.curr_algorithm,
+            datasets=self.curr_datasets,
             general_logger=self.logger,
+            logger_over_rounds=self.logger_over_rounds,
             config=self.config,
+            n_round=n_round,
             epoch_offset=0,
             best_val_metric=None,
             unlabeled_dataset=None,
         )
 
-        for split in datasets:
-            datasets[split]['eval_logger'].close()
-            datasets[split]['algo_logger'].close()
+        for split in self.curr_datasets:
+            self.curr_datasets[split]['eval_logger'].close()
+            self.curr_datasets[split]['algo_logger'].close()
 
-        return train_acc_avg, val_acc_avg
+        return train_acc_avg, val_acc_avg, self.curr_datasets
 
     def prepare_training(self, n_round):
-        from utils import BatchLogger, log_group_data
         from algorithms.initializer import initialize_algorithm
 
         # Transforms & data augmentations for labeled dataset
@@ -140,16 +143,15 @@ class Strategy:
 
         return datasets, algorithm
 
-    def predict(self, data):
-        # TODO: replace with run_epoch with train=False
-        preds = self.net.predict(data)
-        return preds
-
     def predict_prob(self, data):
-        # TODO: replace with run_epoch with train=False
-        probs = self.net.predict_prob(data)
-        return probs
+        from train import run_epoch, infer_predictions
+        y_pred = infer_predictions(self.curr_algorithm.model, self.curr_datasets['unlabeled_for_al']["loader"], self.config)
+        return y_pred
 
+    # def predict(self, data):
+    #     results, y_pred = run_epoch(self.curr_algorithm, self.curr_datasets['unlabeled_for_al'], self.logger, "best", self.config, train=False)
+    #     return y_pred
+    #
     # def predict_prob_dropout(self, data, n_drop=10):
     #     probs = self.net.predict_prob_dropout(data, n_drop=n_drop)
     #     return probs
