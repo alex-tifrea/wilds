@@ -112,7 +112,7 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
         general_logger.write('\nEpoch [%d]:\n' % epoch)
 
         # First run training
-        train_results, train_results = run_epoch(algorithm, datasets['train'], general_logger, epoch, config, train=True, unlabeled_dataset=unlabeled_dataset)
+        train_results, _ = run_epoch(algorithm, datasets['train'], general_logger, epoch, config, train=True, unlabeled_dataset=unlabeled_dataset)
 
         # Then run val
         val_results, y_pred = run_epoch(algorithm, datasets['val'], general_logger, epoch, config, train=False)
