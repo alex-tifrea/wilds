@@ -23,9 +23,6 @@ class Strategy:
         raise NotImplementedError
 
     def update(self, pos_idxs, neg_idxs=None):
-        print("DADA", self.full_dataset.split_array[pos_idxs].sum(), (self.full_dataset.split_array[pos_idxs] ==
-        self.full_dataset.split_dict["train"]).sum(),
-                self.full_dataset.split_dict["train"], len(pos_idxs))
         # Check that all the indices point to training samples (not validation).
         assert (self.full_dataset.split_array[pos_idxs] ==
         self.full_dataset.split_dict["train"]).sum() == len(pos_idxs), "Some indexes are not in the training set."
