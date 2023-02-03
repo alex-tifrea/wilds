@@ -131,9 +131,9 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
             best_results = {}
             best_results["best_epoch"] = epoch
             best_results["best_val_metric"] = best_val_metric
-            for k, v in train_results:
+            for k, v in train_results.items():
                 best_results[f"train_{k}"] = v
-            for k, v in val_results:
+            for k, v in val_results.items():
                 best_results[f"val_{k}"] = v
             general_logger.write(f'Epoch {epoch} has the best validation performance so far.\n')
 
@@ -149,7 +149,7 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
             split_results, y_pred = run_epoch(algorithm, datasets[split], general_logger, epoch, config, train=False)
             save_pred_if_needed(y_pred, datasets[split], epoch, config, is_best)
             if is_best:
-                for k, v in split_results:
+                for k, v in split_results.items():
                     best_results[f"{split}_{k}"] = v
 
         general_logger.write('\n')
