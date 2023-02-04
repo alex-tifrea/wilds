@@ -14,6 +14,7 @@ class WILDSDataset:
       For convenience, metadata also contains y.
     """
     DEFAULT_SPLITS = {'train': 0, 'val': 1, 'test': 2, 'unlabeled_for_al': 3}
+    DEFAULT_LABELED_CODE = {'unlabeled': 0, 'labeled': 1, 'not_train': 2}
     DEFAULT_SPLIT_NAMES = {'train': 'Train', 'val': 'Validation', 'test': 'Test', 'unlabeled_for_al': 'UnlabeledForAL'}
     DEFAULT_SOURCE_DOMAIN_SPLITS = [0]
 
@@ -86,7 +87,7 @@ class WILDSDataset:
         Output:
             - subset (WILDSSubset): A (potentially subsampled) subset of the WILDSDataset.
         """
-        split_idx = np.where(self.labeled_for_al_array)[0]
+        split_idx = np.where(self.labeled_for_al_array == self.labeled_code["labeled"])[0]
         return WILDSSubset(self, split_idx, transform)
 
     def get_unlabeled_for_al_subset(self, transform=None):
@@ -96,16 +97,18 @@ class WILDSDataset:
         Output:
             - subset (WILDSSubset): A (potentially subsampled) subset of the WILDSDataset.
         """
-        split_idx = np.where(self.labeled_for_al_array != 1)[0]
+        split_idx = np.where(self.labeled_for_al_array == self.labeled_code["unlabeled"])[0]
         return WILDSSubset(self, split_idx, transform)
 
     # Set self._labeled_for_al_array with 0 for unlabeled and 1 for labeled
-    def init_for_al(self, seed_size=None, label_conditional_sampling=False):
+    def init_for_al(self, seed_size=None, label_conditional_sampling=True):
         train_idxs = (self.split_array == self.split_dict["train"])
         if seed_size is None:
-            self.labeled_for_al_array = train_idxs
+            self.labeled_for_al_array = np.ones_like(self.split_array) * self.labeled_code["not_train"]
+            self.labeled_for_al_array[self.split_array == self.split_dict["train"]] = self.labeled_code["labeled"]
         else:
-            self.labeled_for_al_array = np.zeros_like(self.split_array)
+            self.labeled_for_al_array = np.ones_like(self.split_array) * self.labeled_code["not_train"]
+            self.labeled_for_al_array[self.split_array == self.split_dict["train"]] = self.labeled_code["unlabeled"]
             if label_conditional_sampling:
                 # Sample with ensuring that the seed set contains data from all classes
                 # (note that some subgroups may still be not represented in the seed set).
@@ -121,8 +124,8 @@ class WILDSDataset:
                 labeled_idxs = np.concatenate(labeled_idxs)
             else:
                 labeled_idxs = np.random.choice(np.where(train_idxs)[0], seed_size, replace=False)
-            self.labeled_for_al_array[labeled_idxs] = 1
-            assert self.labeled_for_al_array[labeled_idxs].sum() == seed_size
+            self.labeled_for_al_array[labeled_idxs] = self.labeled_code["labeled"]
+            assert labeled_idxs.shape[0] == seed_size
 
     def _add_coarse_domain_metadata(self):
         """
@@ -252,6 +255,22 @@ class WILDSDataset:
         e.g., 'standard', 'mixed-to-test', 'user', etc.
         """
         return self._split_scheme
+
+    @property
+    def labeled_code(self):
+        """
+        i.e. {'labeled': 0, 'unlabeled': 1, 'not_train': 2}.
+        """
+        return getattr(self, '_labeled_code', WILDSDataset.DEFAULT_LABELED_CODE)
+
+    @property
+    def split_dict(self):
+        """
+        A dictionary mapping splits to integer identifiers (used in split_array),
+        e.g., {'train': 0, 'val': 1, 'test': 2}.
+        Keys should match up with split_names.
+        """
+        return getattr(self, '_split_dict', WILDSDataset.DEFAULT_SPLITS)
 
     @property
     def split_dict(self):

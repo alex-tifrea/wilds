@@ -498,7 +498,7 @@ def main():
         strategy.update(query_idxs)
 
         train_acc_avg, val_acc_avg, curr_datasets = strategy.train(n_round=rd)
-        print(f"Round 0: train_acc_avg={train_acc_avg}; val_acc_avg={val_acc_avg}")
+        print(f"Round {rd}: train_acc_avg={train_acc_avg}; val_acc_avg={val_acc_avg}")
 
     # TODO: resume and eval_only currently not supported
     assert config.resume == False, "resume currently not supported"

@@ -6,5 +6,5 @@ class RandomSampling(Strategy):
         super(RandomSampling, self).__init__(dataset, config, logger, train_grouper)
 
     def query(self, n, curr_datasets):
-        candidates = np.where((self.full_dataset.labeled_for_al_array == 0) & (self.full_dataset.split_array == self.full_dataset.split_dict["train"]))[0]
+        candidates = np.where((self.full_dataset.labeled_for_al_array == self.full_dataset.labeled_code["unlabeled"]) & (self.full_dataset.split_array == self.full_dataset.split_dict["train"]))[0]
         return np.random.choice(candidates, n, replace=False)

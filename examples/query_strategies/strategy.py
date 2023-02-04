@@ -29,9 +29,9 @@ class Strategy:
         assert (self.full_dataset.split_array[pos_idxs] ==
         self.full_dataset.split_dict["train"]).sum() == len(pos_idxs), "Some indexes are not in the training set."
 
-        self.full_dataset.labeled_for_al_array[pos_idxs] = 1
+        self.full_dataset.labeled_for_al_array[pos_idxs] = self.full_dataset.labeled_code["labeled"]
         if neg_idxs:
-            self.full_dataset.labeled_for_al_array[neg_idxs] = 0
+            self.full_dataset.labeled_for_al_array[neg_idxs] = self.full_dataset.labeled_code["unlabeled"]
 
     def train(self, n_round=None):
         from train import train_round
