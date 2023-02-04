@@ -21,8 +21,12 @@ class LTDataset(WILDSDataset):
             "cifar100lt": datasets.CIFAR100,
             "svhnlt": datasets.SVHN,
         }
-        data_train = dataset_fn[dataset](self._data_dir, train=True, download=download)
-        data_test = dataset_fn[dataset](self._data_dir, train=False, download=download)
+        if "svhn" in dataset:
+            data_train = dataset_fn[dataset](self._data_dir, split="train", download=download)
+            data_test = dataset_fn[dataset](self._data_dir, split="test", download=download)
+        else:
+            data_train = dataset_fn[dataset](self._data_dir, train=True, download=download)
+            data_test = dataset_fn[dataset](self._data_dir, train=False, download=download)
 
         data_train = self.subsample_min_classes(
             data=data_train,
