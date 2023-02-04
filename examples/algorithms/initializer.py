@@ -15,17 +15,17 @@ from algorithms.noisy_student import NoisyStudent
 from configs.supported import algo_log_metrics, losses
 from losses import initialize_loss
 
-def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None):
+def initialize_algorithm(algorithm_name, config, datasets, train_grouper, unlabeled_dataset=None):
     train_dataset = datasets['train']['dataset']
     train_loader = datasets['train']['loader']
-    d_out = infer_d_out(train_dataset, config)
+    d_out = infer_d_out(train_dataset, algorithm_name)
 
     # Other config
     n_train_steps = math.ceil(len(train_loader)/config.gradient_accumulation_steps) * config.n_epochs
     loss = initialize_loss(config.loss_function, config)
     metric = algo_log_metrics[config.algo_log_metric]
 
-    if config.algorithm == 'ERM':
+    if algorithm_name == 'ERM':
         algorithm = ERM(
             config=config,
             d_out=d_out,
@@ -33,7 +33,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             loss=loss,
             metric=metric,
             n_train_steps=n_train_steps)
-    elif config.algorithm == 'RW':
+    elif algorithm_name == 'RW':
         train_g = train_grouper.metadata_to_group(train_dataset.metadata_array)
         group_counts_train = get_counts(train_g, train_grouper.n_groups)
         algorithm = RW(
@@ -44,7 +44,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
                 metric=metric,
                 n_train_steps=n_train_steps,
                 group_counts_train=group_counts_train)
-    elif config.algorithm == 'groupDRO':
+    elif algorithm_name == 'groupDRO':
         train_g = train_grouper.metadata_to_group(train_dataset.metadata_array)
         is_group_in_train = get_counts(train_g, train_grouper.n_groups) > 0
         algorithm = GroupDRO(
@@ -55,7 +55,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             metric=metric,
             n_train_steps=n_train_steps,
             is_group_in_train=is_group_in_train)
-    elif config.algorithm == 'deepCORAL':
+    elif algorithm_name == 'deepCORAL':
         algorithm = DeepCORAL(
             config=config,
             d_out=d_out,
@@ -63,7 +63,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             loss=loss,
             metric=metric,
             n_train_steps=n_train_steps)
-    elif config.algorithm == 'IRM':
+    elif algorithm_name == 'IRM':
         algorithm = IRM(
             config=config,
             d_out=d_out,
@@ -71,7 +71,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             loss=loss,
             metric=metric,
             n_train_steps=n_train_steps)
-    elif config.algorithm == 'DANN':
+    elif algorithm_name == 'DANN':
         if unlabeled_dataset is not None:
             unlabeled_dataset = unlabeled_dataset['dataset']
             metadata_array = torch.cat(
@@ -99,7 +99,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             n_domains = domain_idx,
             group_ids_to_domains=group_ids_to_domains,
         )
-    elif config.algorithm == 'AFN':
+    elif algorithm_name == 'AFN':
         algorithm = AFN(
             config=config,
             d_out=d_out,
@@ -108,7 +108,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             metric=metric,
             n_train_steps=n_train_steps
         )
-    elif config.algorithm == 'FixMatch':
+    elif algorithm_name == 'FixMatch':
         algorithm = FixMatch(
             config=config,
             d_out=d_out,
@@ -116,7 +116,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             loss=loss,
             metric=metric,
             n_train_steps=n_train_steps)
-    elif config.algorithm == 'PseudoLabel':
+    elif algorithm_name == 'PseudoLabel':
         algorithm = PseudoLabel(
             config=config,
             d_out=d_out,
@@ -124,7 +124,7 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             loss=loss,
             metric=metric,
             n_train_steps=n_train_steps)
-    elif config.algorithm == 'NoisyStudent':
+    elif algorithm_name == 'NoisyStudent':
         if config.soft_pseudolabels:
             unlabeled_loss = initialize_loss("cross_entropy_logits", config)
         else:
@@ -138,11 +138,11 @@ def initialize_algorithm(config, datasets, train_grouper, unlabeled_dataset=None
             metric=metric,
             n_train_steps=n_train_steps)
     else:
-        raise ValueError(f"Algorithm {config.algorithm} not recognized")
+        raise ValueError(f"Algorithm {algorithm_name} not recognized")
 
     return algorithm
 
-def infer_d_out(train_dataset, config):
+def infer_d_out(train_dataset, algorithm_name):
     # Configure the final layer of the networks used
     # The code below are defaults. Edit this if you need special config for your model.
     if train_dataset.is_classification:
@@ -159,8 +159,8 @@ def infer_d_out(train_dataset, config):
     elif train_dataset.is_detection:
         # For detection, d_out is the number of classes
         d_out = train_dataset.n_classes
-        if config.algorithm in ['deepCORAL', 'IRM']:
-            raise ValueError(f'{config.algorithm} is not currently supported for detection datasets.')
+        if algorithm_name in ['deepCORAL', 'IRM']:
+            raise ValueError(f'{algorithm_name} is not currently supported for detection datasets.')
     else:
         # For regression, we have one output per target dimension
         d_out = train_dataset.y_size

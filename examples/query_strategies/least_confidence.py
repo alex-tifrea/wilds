@@ -7,7 +7,9 @@ class LeastConfidence(Strategy):
         super(LeastConfidence, self).__init__(dataset, config, logger, train_grouper)
 
     def query(self, n, curr_datasets):
-        probs = self.predict_prob()
+        probs = self.predict_prob(
+            model=self.algorithm_for_sampling.model,
+            data_loader=curr_datasets["unlabeled_for_al"]["loader"])
         uncertainties = probs.max(1)[0]
         assert uncertainties.shape[0] == self.full_dataset.labeled_for_al_array[self.full_dataset.labeled_for_al_array == 0].shape[0], f"Wrong shapes {uncertainties.shape} and  {self.full_dataset.labeled_for_al_array[self.full_dataset.labeled_for_al_array == 0].shape}"
         output_idxs = uncertainties.sort()[1][:n]

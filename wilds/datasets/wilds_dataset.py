@@ -100,16 +100,29 @@ class WILDSDataset:
         return WILDSSubset(self, split_idx, transform)
 
     # Set self._labeled_for_al_array with 0 for unlabeled and 1 for labeled
-    def init_for_al(self, seed_size=None):
+    def init_for_al(self, seed_size=None, label_conditional_sampling=False):
         train_idxs = (self.split_array == self.split_dict["train"])
         if seed_size is None:
             self.labeled_for_al_array = train_idxs
         else:
             self.labeled_for_al_array = np.zeros_like(self.split_array)
-            labeled_idxs = np.random.choice(np.where(train_idxs)[0], seed_size, replace=False)
+            if label_conditional_sampling:
+                # Sample with ensuring that the seed set contains data from all classes
+                # (note that some subgroups may still be not represented in the seed set).
+                labeled_idxs = []
+                for c in range(self.n_classes - 1, -1, -1):
+                    class_idxs = np.where((train_idxs) & (self.y_array.numpy() == c))[0]
+                    if c != 0:
+                        num_class_samples = int(seed_size * class_idxs.shape[0] / np.where(train_idxs)[0].shape[0])
+                    else:
+                        # Get all the remaining samples from class 0.
+                        num_class_samples = seed_size - sum([l.shape[0] for l in labeled_idxs])
+                    labeled_idxs += [np.random.choice(class_idxs, num_class_samples, replace=False)]
+                labeled_idxs = np.concatenate(labeled_idxs)
+            else:
+                labeled_idxs = np.random.choice(np.where(train_idxs)[0], seed_size, replace=False)
             self.labeled_for_al_array[labeled_idxs] = 1
             assert self.labeled_for_al_array[labeled_idxs].sum() == seed_size
-
 
     def _add_coarse_domain_metadata(self):
         """

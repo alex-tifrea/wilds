@@ -73,7 +73,10 @@ def main():
 
     # Required arguments
     parser.add_argument('-d', '--dataset', choices=wilds.supported_datasets, required=True)
-    parser.add_argument('--algorithm', required=True, choices=supported.algorithms)
+    parser.add_argument('--algorithm', required=True, choices=supported.algorithms,
+                        help="This is the algorithm used to train the model that will be used for prediction i.e. to get the error metrics.")
+    parser.add_argument('--algorithm_for_sampling', default=None, choices=[None] + supported.algorithms,
+                        help="This is the algorithm used to train the model that will be used for sampling e.g. uncertainty sampling.")
     parser.add_argument('--root_dir', required=True,
                         help='The directory where [dataset]/data can be found (or should be downloaded to, if it does not exist).')
 
@@ -223,6 +226,9 @@ def main():
     config = parser.parse_args()
     config = populate_defaults(config)
 
+    if config.algorithm_for_sampling is None:
+        config.algorithm_for_sampling = config.algorithm
+
     # For the GlobalWheat detection dataset,
     # we need to change the multiprocessing strategy or there will be
     # too many open file descriptors.
@@ -235,6 +241,7 @@ def main():
         if len(config.device) > device_count:
             raise ValueError(f"Specified {len(config.device)} devices, but only {device_count} devices found.")
 
+        # TODO: need to remove this here if I want to train several prediction models in parallel; I dont want data parallelism
         config.use_data_parallel = len(config.device) > 1
         device_str = ",".join(map(str, config.device))
         os.environ["CUDA_VISIBLE_DEVICES"] = device_str

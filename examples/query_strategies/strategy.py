@@ -4,6 +4,8 @@ import os
 from wilds.common.data_loaders import get_train_loader, get_eval_loader
 from transforms import initialize_transform
 from utils import BatchLogger, log_group_data
+from algorithms.initializer import initialize_algorithm
+
 
 class Strategy:
     def __init__(self, full_dataset, config, logger, train_grouper):
@@ -12,7 +14,7 @@ class Strategy:
         self.logger = logger
         assert hasattr(self.full_dataset, "labeled_for_al_array"), "Need to call init_for_al on the dataset first."
         self.train_grouper = train_grouper
-        self.curr_datasets, self.curr_algorithm = None, None
+        self.curr_datasets, self.algorithm_for_sampling = None, None
 
         self.logger_over_rounds = BatchLogger(
             os.path.join(self.config.log_dir, f'rounds_eval.csv'), mode=self.logger.mode,
@@ -34,10 +36,10 @@ class Strategy:
     def train(self, n_round=None):
         from train import train_round
 
-        self.curr_datasets, self.curr_algorithm = self.prepare_training(n_round)
+        self.curr_datasets, curr_algorithm = self.prepare_training(n_round)
 
         train_acc_avg, val_acc_avg = train_round(
-            algorithm=self.curr_algorithm,
+            algorithm=curr_algorithm,
             datasets=self.curr_datasets,
             general_logger=self.logger,
             logger_over_rounds=self.logger_over_rounds,
@@ -48,6 +50,18 @@ class Strategy:
             unlabeled_dataset=None,
         )
 
+        if self.config.algorithm == self.config.algorithm_for_sampling:
+            self.algorithm_for_sampling = curr_algorithm
+        else:
+            # Initialize algorithm for sampling.
+            self.algorithm_for_sampling = initialize_algorithm(
+                algorithm_name=self.config.algorithm_for_sampling,
+                config=self.config,
+                datasets=self.curr_datasets,
+                train_grouper=self.train_grouper,
+                unlabeled_dataset=None,
+            )
+
         for split in self.curr_datasets:
             self.curr_datasets[split]['eval_logger'].close()
             self.curr_datasets[split]['algo_logger'].close()
@@ -55,8 +69,6 @@ class Strategy:
         return train_acc_avg, val_acc_avg, self.curr_datasets
 
     def prepare_training(self, n_round):
-        from algorithms.initializer import initialize_algorithm
-
         # Transforms & data augmentations for labeled dataset
         # To modify data augmentation, modify the following code block.
         # If you want to use transforms that modify both `x` and `y`,
@@ -134,8 +146,9 @@ class Strategy:
 
         log_group_data(datasets, self.train_grouper, self.logger)
 
-        # Initialize algorithm.
+        # Initialize algorithm for prediction.
         algorithm = initialize_algorithm(
+            algorithm_name=self.config.algorithm,
             config=self.config,
             datasets=datasets,
             train_grouper=self.train_grouper,
@@ -144,9 +157,9 @@ class Strategy:
 
         return datasets, algorithm
 
-    def predict_prob(self, data):
+    def predict_prob(self, model, data_loader):
         from train import run_epoch, infer_predictions
-        y_pred = infer_predictions(self.curr_algorithm.model, self.curr_datasets['unlabeled_for_al']["loader"], self.config)
+        y_pred = infer_predictions(model, data_loader, self.config)
         return y_pred
 
     # def predict(self, data):
