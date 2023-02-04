@@ -157,7 +157,8 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
     best_results['n_round'] = n_round
     logger_over_rounds.log(best_results)
 
-    return train_results["acc_avg"], val_results["acc_avg"]
+    acc_avg_key = "acc_avg" if config.dataset != "waterbirds" else "adj_acc_avg"
+    return train_results[acc_avg_key], val_results[acc_avg_key]
 
 
 def evaluate(algorithm, datasets, epoch, general_logger, config, is_best):
