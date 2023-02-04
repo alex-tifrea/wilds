@@ -24,6 +24,8 @@ class LTDataset(WILDSDataset):
         if "svhn" in dataset:
             data_train = dataset_fn[dataset](self._data_dir, split="train", download=download)
             data_test = dataset_fn[dataset](self._data_dir, split="test", download=download)
+            data_train.data, data_test.data = data_train.data.transpose(0,2,3,1), data_test.data.transpose(0,2,3,1)
+            data_train.targets, data_test.targets = data_train.labels, data_test.labels
         else:
             data_train = dataset_fn[dataset](self._data_dir, train=True, download=download)
             data_test = dataset_fn[dataset](self._data_dir, train=False, download=download)
