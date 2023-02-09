@@ -47,6 +47,10 @@ def get_dataset(dataset: str, version: Optional[str] = None, unlabeled: bool = F
         from wilds.datasets.lt_datasets import LTDataset
         return LTDataset(dataset=dataset, version=version, **dataset_kwargs)
 
+    elif dataset == "inaturalist":
+        from wilds.datasets.inaturalist import INaturalist
+        return INaturalist(dataset=dataset, version=version, **dataset_kwargs)
+
     elif dataset == 'civilcomments':
         if unlabeled:
             from wilds.datasets.unlabeled.civilcomments_unlabeled_dataset import CivilCommentsUnlabeledDataset

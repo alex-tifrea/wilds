@@ -203,8 +203,8 @@ def main():
                         help='keyword arguments for wandb.init() passed as key1=value1 key2=value2')
 
     # Active learning.
-    parser.add_argument('--n_init_labeled', type=int, default=10000, help="number of init labeled samples")
-    parser.add_argument('--n_queries', type=int, default=1000,
+    parser.add_argument('--n_init_labeled', type=int, default=1000, help="number of init labeled samples")
+    parser.add_argument('--n_queries', type=int, default=500,
                         help="number of queries per round i.e. batch size for a sampling step")
     parser.add_argument('--n_rounds', type=int, default=10,
                         help="number of sampling rounds")

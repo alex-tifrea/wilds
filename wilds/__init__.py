@@ -24,7 +24,8 @@ additional_datasets = [
     'bdd100k',
     'sqf',
     'svhnlt',
-    'encode'
+    'encode',
+    'inaturalist',
 ]
 
 supported_datasets = benchmark_datasets + additional_datasets

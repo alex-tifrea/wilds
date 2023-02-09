@@ -97,6 +97,8 @@ dataset_defaults = {
         'n_epochs': 200,
         'algo_log_metric': 'accuracy',
         'process_outputs_function': 'multiclass_logits_to_pred',
+        'n_init_labeled': 1_000,
+        'n_queries': 500,
     },
     'cifar10lt': {
         'dataset_kwargs': {
@@ -121,6 +123,8 @@ dataset_defaults = {
         'n_epochs': 200,
         'algo_log_metric': 'accuracy',
         'process_outputs_function': 'multiclass_logits_to_pred',
+        'n_init_labeled': 1_000,
+        'n_queries': 500,
     },
     'svhnlt': {
         'dataset_kwargs': {
@@ -145,6 +149,8 @@ dataset_defaults = {
         'n_epochs': 200,
         'algo_log_metric': 'accuracy',
         'process_outputs_function': 'multiclass_logits_to_pred',
+        'n_init_labeled': 1_000,
+        'n_queries': 500,
     },
     'civilcomments': {
         'split_scheme': 'official',
@@ -411,8 +417,10 @@ dataset_defaults = {
         'batch_size': 128,
         'lr': 1e-5,
         'weight_decay': 1.0,
-        'n_epochs': 300,
+        'n_epochs': 250,
         'process_outputs_function': 'multiclass_logits_to_pred',
+        'n_init_labeled': 1_000,
+        'n_queries': 500,
     },
     'yelp': {
         'split_scheme': 'official',
@@ -500,7 +508,31 @@ dataset_defaults = {
         },
         'process_outputs_function': None,
         'process_pseudolabels_function': 'pseudolabel_detection_discard_empty',
-    }
+    },
+    'inaturalist': {
+        'dataset_kwargs': {
+            'val_ratio': 0.2,
+        },
+        'split_scheme': 'official',
+        'model': 'resnet50',
+        'model_kwargs': {'pretrained': True},
+        'transform': 'image_base',
+        'loss_function': 'cross_entropy',
+        'groupby_fields': ['y'],
+        'val_metric': 'acc_wg',
+        'val_metric_decreasing': False,
+        'optimizer': 'SGD',
+        'optimizer_kwargs': {'momentum': 0.9},
+        'scheduler': None,
+        'batch_size': 64,
+        'lr': 0.001,
+        'weight_decay': 0.0,
+        'n_epochs': 80,
+        'algo_log_metric': 'accuracy',
+        'process_outputs_function': 'multiclass_logits_to_pred',
+        'n_init_labeled': 10_000,
+        'n_queries': 5_000,
+    },
 }
 
 ##########################################
