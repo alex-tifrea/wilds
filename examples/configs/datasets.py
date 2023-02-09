@@ -101,31 +101,7 @@ dataset_defaults = {
     'cifar10lt': {
         'dataset_kwargs': {
             'fraction_min_classes': 0.5,
-            'maj_to_min_ratio': 100,
-            'val_ratio': 0.2,
-        },
-        'split_scheme': 'official',
-        'model': 'resnet50',
-        'model_kwargs': {'pretrained': True},
-        'transform': 'image_base',
-        'loss_function': 'cross_entropy',
-        'groupby_fields': ['y'],
-        'val_metric': 'acc_wg',
-        'val_metric_decreasing': False,
-        'optimizer': 'SGD',
-        'optimizer_kwargs': {'momentum': 0.9},
-        'scheduler': None,
-        'batch_size': 64,
-        'lr': 0.001,
-        'weight_decay': 0.0,
-        'n_epochs': 200,
-        'algo_log_metric': 'accuracy',
-        'process_outputs_function': 'multiclass_logits_to_pred',
-    },
-    'cifar100lt': {
-        'dataset_kwargs': {
-            'fraction_min_classes': 0.5,
-            'maj_to_min_ratio': 100,
+            'maj_to_min_ratio': 10,
             'val_ratio': 0.2,
         },
         'split_scheme': 'official',
@@ -149,7 +125,7 @@ dataset_defaults = {
     'svhnlt': {
         'dataset_kwargs': {
             'fraction_min_classes': 0.5,
-            'maj_to_min_ratio': 100,
+            'maj_to_min_ratio': 10,
             'val_ratio': 0.2,
         },
         'split_scheme': 'official',
