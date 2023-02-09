@@ -83,7 +83,9 @@ dataset_defaults = {
         'model_kwargs': {'pretrained': True},
         'transform': 'image_base',
         'loss_function': 'cross_entropy',
-        'groupby_fields': ['male', 'y'],
+        # [TODO celeba] revert
+        # 'groupby_fields': ['male', 'y'],
+        'groupby_fields': ['blond_hair', 'y'],
         'val_metric': 'acc_wg',
         'val_metric_decreasing': False,
         'optimizer': 'SGD',

@@ -107,7 +107,7 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
         - Evaluates on any other specified splits in the configs
     Assumes that the datasets dict contains labeled data.
     """
-    best_results = {}
+    results = {}
     for epoch in range(epoch_offset, config.n_epochs):
         general_logger.write('\nEpoch [%d]:\n' % epoch)
 
@@ -128,13 +128,13 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
                 is_best = curr_val_metric > best_val_metric
         if is_best:
             best_val_metric = curr_val_metric
-            best_results = {}
-            best_results["best_epoch"] = epoch
-            best_results["best_val_metric"] = best_val_metric
+            results = {}
+            results["best_epoch"] = epoch
+            results["best_val_metric"] = best_val_metric
             for k, v in train_results.items():
-                best_results[f"train_{k}"] = v
+                results[f"best_train_{k}"] = v
             for k, v in val_results.items():
-                best_results[f"val_{k}"] = v
+                results[f"best_val_{k}"] = v
             general_logger.write(f'Epoch {epoch} has the best validation performance so far.\n')
 
         save_model_if_needed(algorithm, datasets['val'], epoch, config, is_best, best_val_metric)
@@ -150,12 +150,18 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
             save_pred_if_needed(y_pred, datasets[split], epoch, config, is_best)
             if is_best:
                 for k, v in split_results.items():
-                    best_results[f"{split}_{k}"] = v
+                    results[f"{split}_{k}"] = v
 
         general_logger.write('\n')
 
-    best_results['n_round'] = n_round
-    logger_over_rounds.log(best_results)
+    # Log last epoch results (i.e. without ES).
+    for k, v in train_results.items():
+        results[f"last_train_{k}"] = v
+    for k, v in val_results.items():
+        results[f"last_val_{k}"] = v
+
+    results['n_round'] = n_round
+    logger_over_rounds.log(results)
 
     acc_avg_key = "acc_avg" if config.dataset != "waterbirds" else "adj_acc_avg"
     return train_results[acc_avg_key], val_results[acc_avg_key]

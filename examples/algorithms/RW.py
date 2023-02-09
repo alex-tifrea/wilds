@@ -16,8 +16,9 @@ class RW(ERM):
             n_train_steps=n_train_steps,
         )
         self.group_counts_train = group_counts_train
-        self.use_unlabeled_y = config.use_unlabeled_y # Expect x,y,m from unlabeled loaders and train on the unlabeled y
-        # initialize adversarial weights
+        self.use_unlabeled_y = config.use_unlabeled_y  # Expect x,y,m from unlabeled loaders and train on the unlabeled y
+        # TODO: change here to introduce InvRW; maybe have it as an exp temperature kind of thing
+        # initialize weights
         self.group_weights = 1. / self.group_counts_train
         self.group_weights = self.group_weights/self.group_weights.sum()
         self.group_weights = self.group_weights.to(self.device)

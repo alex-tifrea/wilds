@@ -60,8 +60,11 @@ class CelebADataset(WILDSDataset):
     def __init__(self, version=None, root_dir='data', download=False, split_scheme='official'):
         self._version = version
         self._data_dir = self.initialize_data_dir(root_dir, download)
-        target_name = 'Blond_Hair'
-        confounder_names = ['Male']
+        # [TODO celeba] revert
+        # target_name = 'Blond_Hair'
+        # confounder_names = ['Male']
+        target_name = 'Male'
+        confounder_names = ['Blond_Hair']
 
         # Read in attributes
         attrs_df = pd.read_csv(
@@ -97,7 +100,9 @@ class CelebADataset(WILDSDataset):
         confounder_names = [s.lower() for s in confounder_names]
         self._metadata_fields = confounder_names + ['y']
         self._metadata_map = {
-            'y': ['not blond', '    blond'] # Padding for str formatting
+            # [TODO celeba] revert
+            # 'y': ['not blond', '    blond'] # Padding for str formatting
+            'y': ['female', '  male']  # Padding for str formatting
         }
 
         self._eval_grouper = CombinatorialGrouper(
