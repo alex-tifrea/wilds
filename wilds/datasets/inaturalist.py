@@ -57,7 +57,7 @@ class INaturalist(WILDSDataset):
         if idx < len(self._data_train):
             return self._data_train[idx][0]
         else:
-            return self._data_test[idx][0]
+            return self._data_test[idx - len(self._data_train)][0]
        # return transforms.ToPILImage()(self._input_array[idx])
 
     def eval(self, y_pred, y_true, metadata, prediction_fn=None):
