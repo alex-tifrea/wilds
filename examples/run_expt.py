@@ -492,7 +492,7 @@ def main():
     train_acc_avg, val_acc_avg, curr_datasets = strategy.train(n_round=0)
     print(f"Round 0: train_acc_avg={train_acc_avg}; val_acc_avg={val_acc_avg}")
 
-    for rd in range(config.n_rounds):
+    for rd in range(1, config.n_rounds+1):
         print(f"Round {rd}")
         query_idxs = strategy.query(config.n_queries, curr_datasets)
         strategy.update(query_idxs)
