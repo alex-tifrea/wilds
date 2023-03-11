@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from algorithms.ERM import ERM
 from models.initializer import initialize_model
@@ -19,8 +20,13 @@ class RW(ERM):
         self.use_unlabeled_y = config.use_unlabeled_y  # Expect x,y,m from unlabeled loaders and train on the unlabeled y
         # TODO: change here to introduce InvRW; maybe have it as an exp temperature kind of thing
         # initialize weights
-        self.group_weights = 1. / self.group_counts_train
-        self.group_weights = self.group_weights/self.group_weights.sum()
+        if config.rw_min_group_weight is None:
+            self.group_weights = 1. / self.group_counts_train
+        else:
+            threshold = np.median(self.group_weights.numpy())
+            self.group_weights = torch.ones_like(self.group_counts_train)  # weight 1 for majority points
+            self.group_weights[self.group_weights <= threshold] = config.rw_min_group_weight  # custom weight for minority
+        self.group_weights = self.group_weights / self.group_weights.sum()
         self.group_weights = self.group_weights.to(self.device)
 
     def objective(self, results):

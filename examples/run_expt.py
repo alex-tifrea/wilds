@@ -136,6 +136,8 @@ def main():
 
     # Algorithm
     parser.add_argument('--groupby_fields', nargs='+')
+    parser.add_argument('--rw_min_group_weight', type=float, default=None,
+                        help="Weight of minority groups for reweighting. Weight of majority groups is set to 1.")
     parser.add_argument('--group_dro_step_size', type=float)
     parser.add_argument('--coral_penalty_weight', type=float)
     parser.add_argument('--dann_penalty_weight', type=float)
