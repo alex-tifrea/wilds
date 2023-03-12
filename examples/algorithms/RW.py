@@ -23,7 +23,7 @@ class RW(ERM):
         if config.rw_min_group_weight is None:
             self.group_weights = 1. / self.group_counts_train
         else:
-            threshold = np.median(self.group_weights.numpy())
+            threshold = np.median(self.group_counts_train.numpy())
             self.group_weights = torch.ones_like(self.group_counts_train)  # weight 1 for majority points
             self.group_weights[self.group_weights <= threshold] = config.rw_min_group_weight  # custom weight for minority
         self.group_weights = self.group_weights / self.group_weights.sum()
