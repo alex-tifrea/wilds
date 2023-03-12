@@ -1,9 +1,12 @@
+from copy import deepcopy
 from collections import defaultdict
 import os
 
 from wilds.common.data_loaders import get_train_loader, get_eval_loader
 from transforms import initialize_transform
 from utils import BatchLogger, log_group_data
+from examples.configs.utils import populate_config
+from examples.configs.algorithm import algorithm_defaults
 from algorithms.initializer import initialize_algorithm
 
 
@@ -36,7 +39,7 @@ class Strategy:
     def train(self, n_round=None):
         from train import train_round
 
-        self.curr_datasets, curr_algorithm = self.prepare_training(n_round)
+        self.curr_datasets, curr_algorithm = self.prepare_training(self.config, n_round)
 
         train_acc_avg, val_acc_avg = train_round(
             algorithm=curr_algorithm,
@@ -53,14 +56,31 @@ class Strategy:
         if self.config.algorithm == self.config.algorithm_for_sampling:
             self.algorithm_for_sampling = curr_algorithm
         else:
-            # Initialize algorithm for sampling.
-            self.algorithm_for_sampling = initialize_algorithm(
-                algorithm_name=self.config.algorithm_for_sampling,
-                config=self.config,
-                datasets=self.curr_datasets,
-                train_grouper=self.train_grouper,
+            config_for_sampling = deepcopy(self.config)
+            # Set config appropriate for choice of algorithm for sampling
+            config_for_sampling = populate_config(
+                config_for_sampling,
+                algorithm_defaults[self.config.algorithm_for_sampling],
+                force_overwrite=True
+            )
+            config_for_sampling.algorithm = self.config.algorithm_for_sampling
+            # Make sure that algorithm.model has the best (early-stopped) model.
+            config_for_sampling.keep_only_best_model = True
+
+            data_for_alg_for_sampling, self.algorithm_for_sampling = self.prepare_training(config_for_sampling, n_round)
+
+            alg2_train_acc_avg, alg2_val_acc_avg = train_round(
+                algorithm=self.algorithm_for_sampling,
+                datasets=data_for_alg_for_sampling,
+                general_logger=self.logger,
+                logger_over_rounds=self.logger_over_rounds,
+                config=config_for_sampling,
+                n_round=n_round,
+                epoch_offset=0,
+                best_val_metric=None,
                 unlabeled_dataset=None,
             )
+            print(f"Finished training algorithm for sampling. Train acc {alg2_train_acc_avg}, Val acc {alg2_val_acc_avg}.")
 
         for split in self.curr_datasets:
             self.curr_datasets[split]['eval_logger'].close()
@@ -68,20 +88,20 @@ class Strategy:
 
         return train_acc_avg, val_acc_avg, self.curr_datasets
 
-    def prepare_training(self, n_round):
+    def prepare_training(self, config, n_round):
         # Transforms & data augmentations for labeled dataset
         # To modify data augmentation, modify the following code block.
         # If you want to use transforms that modify both `x` and `y`,
         # set `do_transform_y` to True when initializing the `WILDSSubset` below.
         train_transform = initialize_transform(
-            transform_name=self.config.transform,
-            config=self.config,
+            transform_name=config.transform,
+            config=config,
             dataset=self.full_dataset,
-            additional_transform_name=self.config.additional_train_transform,
+            additional_transform_name=config.additional_train_transform,
             is_training=True)
         eval_transform = initialize_transform(
-            transform_name=self.config.transform,
-            config=self.config,
+            transform_name=config.transform,
+            config=config,
             dataset=self.full_dataset,
             is_training=False)
 
@@ -110,26 +130,26 @@ class Strategy:
             else:
                 datasets[split]['dataset'] = self.full_dataset.get_subset(
                     split,
-                    frac=self.config.frac,
+                    frac=config.frac,
                     transform=transform)
 
             if split == 'train':
                 datasets[split]['loader'] = get_train_loader(
-                    loader=self.config.train_loader,
+                    loader=config.train_loader,
                     dataset=datasets[split]['dataset'],
-                    batch_size=self.config.batch_size,
-                    uniform_over_groups=self.config.uniform_over_groups,
+                    batch_size=config.batch_size,
+                    uniform_over_groups=config.uniform_over_groups,
                     grouper=self.train_grouper,
-                    distinct_groups=self.config.distinct_groups,
-                    n_groups_per_batch=self.config.n_groups_per_batch,
-                    **self.config.loader_kwargs)
+                    distinct_groups=config.distinct_groups,
+                    n_groups_per_batch=config.n_groups_per_batch,
+                    **config.loader_kwargs)
             else:
                 datasets[split]['loader'] = get_eval_loader(
-                    loader=self.config.eval_loader,
+                    loader=config.eval_loader,
                     dataset=datasets[split]['dataset'],
                     grouper=self.train_grouper,
-                    batch_size=self.config.batch_size,
-                    **self.config.loader_kwargs)
+                    batch_size=config.batch_size,
+                    **config.loader_kwargs)
 
             # Set fields
             datasets[split]['split'] = split
@@ -138,18 +158,18 @@ class Strategy:
 
             # Loggers
             datasets[split]['eval_logger'] = BatchLogger(
-                os.path.join(self.config.log_dir, f'{split}_{n_round}_eval.csv'), mode=self.logger.mode, use_wandb=self.config.use_wandb
+                os.path.join(config.log_dir, f'{split}_{n_round}_eval.csv'), mode=self.logger.mode, use_wandb=config.use_wandb
             )
             datasets[split]['algo_logger'] = BatchLogger(
-                os.path.join(self.config.log_dir, f'{split}_{n_round}_algo.csv'), mode=self.logger.mode, use_wandb=self.config.use_wandb
+                os.path.join(config.log_dir, f'{split}_{n_round}_algo.csv'), mode=self.logger.mode, use_wandb=config.use_wandb
             )
 
         log_group_data(datasets, self.train_grouper, self.logger)
 
         # Initialize algorithm for prediction.
         algorithm = initialize_algorithm(
-            algorithm_name=self.config.algorithm,
-            config=self.config,
+            algorithm_name=config.algorithm,
+            config=config,
             datasets=datasets,
             train_grouper=self.train_grouper,
             unlabeled_dataset=None,

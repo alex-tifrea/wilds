@@ -135,7 +135,7 @@ def populate_defaults(config):
     return config
 
 
-def populate_config(config, template: dict, force_compatibility=False):
+def populate_config(config, template: dict, force_compatibility=False, force_overwrite=False):
     """Populates missing (key, val) pairs in config with (key, val) in template.
     Example usage: populate config with defaults
     Args:
@@ -151,13 +151,19 @@ def populate_config(config, template: dict, force_compatibility=False):
         if not isinstance(val, dict): # config[key] expected to be a non-index-able
             if key not in d_config or d_config[key] is None:
                 d_config[key] = val
-            elif d_config[key] != val and force_compatibility:
-                raise ValueError(f"Argument {key} must be set to {val}")
+            elif d_config[key] != val:
+                if force_compatibility:
+                    raise ValueError(f"Argument {key} must be set to {val}")
+                if force_overwrite:
+                    d_config[key] = val
 
         else: # config[key] expected to be a kwarg dict
             for kwargs_key, kwargs_val in val.items():
                 if kwargs_key not in d_config[key] or d_config[key][kwargs_key] is None:
                     d_config[key][kwargs_key] = kwargs_val
-                elif d_config[key][kwargs_key] != kwargs_val and force_compatibility:
-                    raise ValueError(f"Argument {key}[{kwargs_key}] must be set to {val}")
+                elif d_config[key][kwargs_key] != kwargs_val:
+                    if force_compatibility:
+                        raise ValueError(f"Argument {key}[{kwargs_key}] must be set to {val}")
+                    if force_overwrite:
+                        d_config[key][kwargs_key] = kwargs_val
     return config

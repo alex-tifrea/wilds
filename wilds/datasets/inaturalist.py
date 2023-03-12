@@ -49,7 +49,7 @@ class INaturalist(WILDSDataset):
         np.random.seed(42) # need to have determinism in choosing the train/validation split
         train_and_valid[np.random.choice(range(len(self._data_train)), size=val_size, replace=False)] = 1
         self._split_array = np.concatenate((train_and_valid, 2*np.ones(test_size)))
-        np.random.seed(int(time.time()))
+        # np.random.seed(int(time.time()))
 
         super().__init__(root_dir, download, split_scheme)
 

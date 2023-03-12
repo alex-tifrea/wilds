@@ -62,8 +62,11 @@ class LTDataset(WILDSDataset):
 
         super().__init__(root_dir, download, split_scheme)
 
-    def get_input(self, idx):
-       return transforms.ToPILImage()(self._input_array[idx])
+    def get_input(self, idx, label=False):
+       if label:
+           return transforms.ToPILImage()(self._input_array[idx]), self._y_array[idx]
+       else:
+           return transforms.ToPILImage()(self._input_array[idx])
 
     def eval(self, y_pred, y_true, metadata, prediction_fn=None):
         """

@@ -117,6 +117,8 @@ def main():
     parser.add_argument('--noisystudent_dropout_rate', type=float)
     parser.add_argument('--pretrained_model_path', default=None, type=str, help='Specify a path to pretrained model weights')
     parser.add_argument('--load_featurizer_only', default=False, type=parse_bool, const=True, nargs='?', help='If true, only loads the featurizer weights and not the classifier weights.')
+    parser.add_argument('--keep_only_best_model', default=False, type=parse_bool, const=True, nargs='?',
+                        help='If true, algorithm.model contains the best model (possibly early-stopped) after a call to train.')
 
     # NoisyStudent-specific loading
     parser.add_argument('--teacher_model_path', type=str, help='Path to NoisyStudent teacher model weights. If this is defined, pseudolabels will first be computed for unlabeled data before anything else runs.')
