@@ -1,3 +1,4 @@
+import ast
 import sys
 import os
 import csv
@@ -281,7 +282,11 @@ def initialize_wandb(config):
 
     wandb_init_args = config.wandb_kwargs
     wandb_init_args["settings"] = wandb.Settings(start_method="fork")
-    wandb.init(**wandb_init_args)
+    if "tags" in wandb_init_args:
+        wandb_tags = wandb_init_args["tags"]
+        del wandb_init_args["tags"]
+    run = wandb.init(**wandb_init_args)
+    run.tags += tuple(ast.literal_eval(wandb_tags))
     wandb.config.update(config)
 
 def save_pred(y_pred, path_prefix):

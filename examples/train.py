@@ -108,7 +108,7 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
     Assumes that the datasets dict contains labeled data.
     """
     results = {}
-    best_model = None
+    selected_model = None
     for epoch in range(epoch_offset, config.n_epochs):
         general_logger.write('\nEpoch [%d]:\n' % epoch)
 
@@ -136,7 +136,8 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
                 results[f"best_train_{k}"] = v
             for k, v in val_results.items():
                 results[f"best_val_{k}"] = v
-            best_model = deepcopy(algorithm.model)
+            if config.keep_only_sampling_model_at_epoch == "best":
+                selected_model = deepcopy(algorithm.model)
             general_logger.write(f'Epoch {epoch} has the best validation performance so far.\n')
 
         save_model_if_needed(algorithm, datasets['val'], epoch, config, is_best, best_val_metric)
@@ -169,8 +170,8 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
     results['n_round'] = n_round
     logger_over_rounds.log(results)
 
-    if config.keep_only_best_model:
-        algorithm.model = best_model
+    if config.keep_only_sampling_model_at_epoch == "best":
+        algorithm.model = selected_model
 
     acc_avg_key = "acc_avg" if config.dataset != "waterbirds" else "adj_acc_avg"
     return train_results[acc_avg_key], val_results[acc_avg_key]

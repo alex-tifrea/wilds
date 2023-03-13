@@ -210,6 +210,8 @@ def main():
     parser.add_argument('--n_init_labeled', type=int, default=1000, help="number of init labeled samples")
     parser.add_argument('--n_queries', type=int, default=500,
                         help="number of queries per round i.e. batch size for a sampling step")
+    parser.add_argument('--keep_only_sampling_model_at_epoch', type=str, default=None,
+                        help="Specify the early stopping epoch for the sampling model. Can be an integer, or the word `best` to use validation metric.")
     parser.add_argument('--n_rounds', type=int, default=10,
                         help="number of sampling rounds")
     parser.add_argument('--strategy_name', type=str, default="RandomSampling",

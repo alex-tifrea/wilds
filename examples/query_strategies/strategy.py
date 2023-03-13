@@ -64,9 +64,8 @@ class Strategy:
                 force_overwrite=True
             )
             config_for_sampling.algorithm = self.config.algorithm_for_sampling
-            # Make sure that algorithm.model has the best (early-stopped) model.
-            config_for_sampling.keep_only_best_model = True
-
+            if config_for_sampling.keep_only_sampling_model_at_epoch.isnumeric():
+                config_for_sampling.n_epochs = int(config_for_sampling.keep_only_sampling_model_at_epoch)
             data_for_alg_for_sampling, self.algorithm_for_sampling = self.prepare_training(config_for_sampling, n_round)
 
             alg2_train_acc_avg, alg2_val_acc_avg = train_round(
