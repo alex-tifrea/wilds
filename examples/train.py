@@ -152,7 +152,11 @@ def train_round(algorithm, datasets, general_logger, logger_over_rounds, config,
             save_pred_if_needed(y_pred, datasets[split], epoch, config, is_best)
             if is_best:
                 for k, v in split_results.items():
-                    results[f"{split}_{k}"] = v
+                    results[f"{split}_{k}_ES"] = v
+            # Log last epoch results (i.e. without ES).
+            if epoch == config.n_epochs - 1:
+                for k, v in split_results.items():
+                    results[f"last_{split}_{k}"] = v
 
         general_logger.write('\n')
 
