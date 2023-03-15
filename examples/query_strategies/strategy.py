@@ -64,7 +64,8 @@ class Strategy:
                 force_overwrite=True
             )
             config_for_sampling.algorithm = self.config.algorithm_for_sampling
-            if config_for_sampling.keep_only_sampling_model_at_epoch.isnumeric():
+            if (config_for_sampling.keep_only_sampling_model_at_epoch is not None and
+                    config_for_sampling.keep_only_sampling_model_at_epoch.isnumeric()):
                 config_for_sampling.n_epochs = int(config_for_sampling.keep_only_sampling_model_at_epoch)
             data_for_alg_for_sampling, self.algorithm_for_sampling = self.prepare_training(config_for_sampling, n_round)
 
